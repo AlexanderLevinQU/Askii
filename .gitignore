@@ -14,3 +14,7 @@ frontend/dist/
 # OS files
 .DS_Store
 Thumbs.db
+
+#SSH
+SSHKey
+SSHKey.pub
