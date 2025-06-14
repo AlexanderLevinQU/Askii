@@ -35,8 +35,8 @@ namespace Askii.backend.Data
                 .WithMany(u => u.ModeratedSessions)
                 .UsingEntity(j => j.ToTable("SessionModerators")); ;
 
-            //Questions
-
+            /******* Questions *******/
+            
             //One session to many questions
             modelBuilder.Entity<Question>()
                 .HasOne(q => q.Session)
@@ -44,7 +44,7 @@ namespace Askii.backend.Data
                 .HasForeignKey(q => q.SessionID)
                 .OnDelete(DeleteBehavior.Cascade);  // Or Restrict if you prefer
 
-            //Question has on User
+            //Question has one User
             modelBuilder.Entity<Question>()
                 .HasOne(q => q.Asker)
                 .WithMany()  // if User doesn’t have a navigation collection for questions

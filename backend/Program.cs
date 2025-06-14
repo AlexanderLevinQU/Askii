@@ -61,6 +61,17 @@ namespace Askii.backend
 
             app.MapControllers();
 
+
+            //seed database 
+
+            // Seeding database
+            using (var scope = app.Services.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                dbContext.Database.Migrate();
+                DataSeeder.Seed(dbContext);
+            }
+            
             app.Run();
         }
     }

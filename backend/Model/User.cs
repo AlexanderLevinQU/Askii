@@ -12,7 +12,7 @@ namespace Askii.backend.Model
 
         [Key]
         [Required]
-        public string UID { get; private set; }
+        public string UID { get; set; }
 
         [Required]
         public string UserName { get; set; }
