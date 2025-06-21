@@ -113,7 +113,7 @@ namespace Askii.backend.Controllers
 
             if (user == null)
                 return NotFound();
-            
+
             // Update user properties
             user.UserName = userDTO.UserName;
             user.Email = userDTO.Email;
@@ -245,5 +245,25 @@ namespace Askii.backend.Controllers
 
             return Ok(sessionDTOs);
         }
+
+        
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+
+            /** no password for now
+            if (user == null || user.Password != request.Password)
+            {
+                return Unauthorized("Invalid credentials");
+            }
+            **/
+
+            // Simulate a token
+            var token = "fake-jwt-token";
+
+            return Ok(new { token });
+        }
+        
     }
 }

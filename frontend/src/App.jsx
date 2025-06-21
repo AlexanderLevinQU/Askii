@@ -1,20 +1,30 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import LoginPage from './pages/LoginPage';
+/*
+import SessionsPage from './pages/SessionsPage';
+import SessionPage from './pages/SessionPage';
+import QuestionPage from './pages/QuestionPage';
+import UserProfilePage from './pages/UserProfilePage';
+import NotFoundPage from './pages/NotFoundPage';
+*/
 
 function App() {
-  const [message, setMessage] = useState('Loading...');
-
-  useEffect(() => {
-    fetch('http://localhost:5252/api/test')
-      .then(response => response.json())
-      .then(data => setMessage(data.message))
-      .catch(error => setMessage('Error loading message'));
-  }, []);
-
-  return <div>{message}</div>;
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<LoginPage />} />
+        
+        <Route path="/sessions" element={<SessionsPage />} />
+        {/*
+        <Route path="/session/:SessionID" element={<SessionPage />} />
+        <Route path="/question/:QuestionID" element={<QuestionPage />} />
+        <Route path="/user/:UID" element={<UserProfilePage />} />
+        <Route path="*" element={<NotFoundPage />} />
+        */}
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+export default App;
+
