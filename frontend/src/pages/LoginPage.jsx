@@ -1,7 +1,8 @@
 import { useState } from "react";
+import axios from "axios";
 import styles from './Login.module.css';
 import { useNavigate } from "react-router-dom";
-
+import { useUser } from "../contexts/UserContext";
 
 function Login()
 {
@@ -9,22 +10,42 @@ function Login()
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const { login } = useUser();
     const navigate = useNavigate();
+    
 
-    const handleSubmit = (e) => 
+    const handleSubmit = async (e) => 
     {
         e.preventDefault();
+        let response = null;
+        try 
+        {
+            response = await axios.post('/api/User/login', 
+            {
+                email: email,
+                password: password,
+            });
 
-        // Simulated login logic (replace with real API call)
-        if (email == 'test@example.com')
+            console.log('Login success:', response.data);
+        } catch (error)
         {
-            navigate('/sessions');
-        } 
-        else 
-        {
-            setError('Invalid email or password');
+            console.error('Login error:', error.response?.data || error.message);
         }
 
+        // Now you can use response outside try/catch:
+        if (response && response.status === 200) 
+        {
+            console.log('Login success:', response.data);
+            const user = await response.data;
+            //get user
+            login(user);
+            navigate('/sessions');
+        } 
+        else
+        {
+            console.log('No valid response received.');
+            setError('Invalid email or password');
+        }
     }
 
     return (  

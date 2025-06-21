@@ -246,24 +246,33 @@ namespace Askii.backend.Controllers
             return Ok(sessionDTOs);
         }
 
-        
-        [HttpPost("login")]
+        [HttpPost("Login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
 
-            /** no password for now
-            if (user == null || user.Password != request.Password)
+            if (user == null)
             {
                 return Unauthorized("Invalid credentials");
             }
-            **/
 
             // Simulate a token
             var token = "fake-jwt-token";
 
-            return Ok(new { token });
+            // Return token + user data (omit sensitive info)
+            return Ok(new
+            {
+                token,
+                user = new
+                {
+                    uid = user.UID,
+                    userName = user.UserName,
+                    email = user.Email
+                }
+            });
         }
+
+
         
     }
 }
