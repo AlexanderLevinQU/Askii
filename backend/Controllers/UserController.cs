@@ -160,6 +160,7 @@ namespace Askii.backend.Controllers
         public async Task<ActionResult<List<SessionDTO>>> GetSessionsForUser(string UID)
         {
             var sessions = await _context.Sessions
+                .Include(s => s.SessionAdmin)
                 .Include(s => s.SessionAttendees)
                 .Include(s => s.SessionModerators)
                 .Where(s =>
@@ -186,6 +187,8 @@ namespace Askii.backend.Controllers
         public async Task<ActionResult<List<SessionDTO>>> GetModeratedSessionsForUser(string UID)
         {
             var sessions = await _context.Sessions
+                .Include(s => s.SessionAdmin)
+                .Include(s => s.SessionAttendees)
                 .Include(s => s.SessionModerators)
                 .Where(s => s.SessionModerators.Any(m => m.UID == UID))
                 .ToListAsync();
@@ -194,6 +197,7 @@ namespace Askii.backend.Controllers
             {
                 SessionID = session.SessionID,
                 SessionAdminUID = session.SessionAdminUID,
+                SessionAdminUserName = session.SessionAdmin.UserName,
                 SessionTopic = session.SessionTopic,
                 CreatedAt = session.CreatedAt,
                 SessionAttendeeUIDs = session.SessionAttendees?.Select(a => a?.UID).ToList(),
@@ -204,11 +208,13 @@ namespace Askii.backend.Controllers
         }
 
         // GET: api/user/{uid}/attendee-sessions
-        [HttpGet("{UID}/attendee-sessions")]
-        public async Task<ActionResult<List<SessionDTO>>> GetAttendeeSessionsForUser(string UID)
+        [HttpGet("{UID}/attended-sessions")]
+        public async Task<ActionResult<List<SessionDTO>>> GetAttendedSessionsForUser(string UID)
         {
             var sessions = await _context.Sessions
+                .Include(s => s.SessionAdmin)
                 .Include(s => s.SessionAttendees)
+                .Include(s => s.SessionModerators)
                 .Where(s => s.SessionAttendees.Any(m => m.UID == UID))
                 .ToListAsync();
 
@@ -216,6 +222,7 @@ namespace Askii.backend.Controllers
             {
                 SessionID = session.SessionID,
                 SessionAdminUID = session.SessionAdminUID,
+                SessionAdminUserName = session.SessionAdmin.UserName,
                 SessionTopic = session.SessionTopic,
                 CreatedAt = session.CreatedAt,
                 SessionAttendeeUIDs = session.SessionAttendees?.Select(a => a?.UID).ToList(),
@@ -230,6 +237,9 @@ namespace Askii.backend.Controllers
         public async Task<ActionResult<List<SessionDTO>>> GetAdminSessionsForUser(string UID)
         {
             var sessions = await _context.Sessions
+                .Include(s => s.SessionAdmin)
+                .Include(s => s.SessionAttendees)
+                .Include(s => s.SessionModerators)
                 .Where(s => s.SessionAdmin.UID == UID)
                 .ToListAsync();
 
@@ -237,6 +247,7 @@ namespace Askii.backend.Controllers
             {
                 SessionID = session.SessionID,
                 SessionAdminUID = session.SessionAdminUID,
+                SessionAdminUserName = session.SessionAdmin.UserName,
                 SessionTopic = session.SessionTopic,
                 CreatedAt = session.CreatedAt,
                 SessionAttendeeUIDs = session.SessionAttendees?.Select(a => a?.UID).ToList(),

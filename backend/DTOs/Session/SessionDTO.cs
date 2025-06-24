@@ -11,7 +11,9 @@ namespace Askii.backend.DTOs.Session
 
         // 1-to-many: One admin leads many sessions
         public string SessionAdminUID { get; set; }
+        public string SessionAdminUserName { get; set; }
         public string SessionTopic { get; set; }
+        
         public DateTime CreatedAt { get; set; }
     }
 }
