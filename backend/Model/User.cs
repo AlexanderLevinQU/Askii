@@ -23,10 +23,7 @@ namespace Askii.backend.Model
         public string LastName { get; set; }
         public DateTime? DateOfBirth { get; set; }
 
-        public List<Session> AttendedSessions { get; set; }
-        public List<Session> ModeratedSessions { get; set; }
-        public List<Session> AdministeredSessions { get; set; }
-
+        public ICollection<UserSession> UserSessions { get; set; }
         // Optional metadata
         public DateTime CreatedAt { get; set; }
         public DateTime? LastLoginAt { get; set; }

@@ -21,9 +21,7 @@ namespace Askii.backend.Model
         [Required]
         public User SessionAdmin { get; set; }
 
-        // many-to-many relationships
-        public List<User> SessionModerators { get; set; }
-        public List<User> SessionAttendees { get; set; }
+        public ICollection<UserSession> SessionParticipants { get; set; }
 
         // 1-to-many: One session has many questions
         public List<Question> Questions { get; set; }

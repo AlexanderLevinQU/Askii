@@ -16,27 +16,22 @@ namespace Askii.backend.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Many-to-many for Admins
-            modelBuilder.Entity<Session>()
-                .HasOne(s => s.SessionAdmin)
-                .WithMany(u => u.AdministeredSessions) // <-- navigation property here
-                .HasForeignKey(s => s.SessionAdminUID)
-                .OnDelete(DeleteBehavior.Restrict);
 
-            // Many-to-many for attendees
-            modelBuilder.Entity<Session>()
-                .HasMany(s => s.SessionAttendees)
-                .WithMany(u => u.AttendedSessions)
-                .UsingEntity(j => j.ToTable("SessionAttendees"));
+            modelBuilder.Entity<UserSession>()
+                .HasOne(us => us.User)
+                .WithMany(u => u.UserSessions)
+                .HasForeignKey(us => us.UID)
+                .OnDelete(DeleteBehavior.Cascade); // Optional: tweak based on your logic
 
-            // Many-to-many for moderators
-            modelBuilder.Entity<Session>()
-                .HasMany(s => s.SessionModerators)
-                .WithMany(u => u.ModeratedSessions)
-                .UsingEntity(j => j.ToTable("SessionModerators")); ;
+            modelBuilder.Entity<UserSession>()
+                .HasOne(us => us.Session)
+                .WithMany(sp => sp.SessionParticipants)
+                .HasForeignKey(us => us.SessionID)
+                .OnDelete(DeleteBehavior.Cascade);
+
 
             /******* Questions *******/
-            
+
             //One session to many questions
             modelBuilder.Entity<Question>()
                 .HasOne(q => q.Session)
@@ -50,6 +45,16 @@ namespace Askii.backend.Data
                 .WithMany()  // if User doesn’t have a navigation collection for questions
                 .HasForeignKey(q => q.AskerUID)
                 .OnDelete(DeleteBehavior.Restrict);
+
+
+            /*** UserSessions ***/
+            modelBuilder.Entity<UserSession>()
+                .HasKey(us => new { us.UID, us.SessionID });
+
+            //So Role is kept as a string instead of an int
+            modelBuilder.Entity<UserSession>()
+                .Property(us => us.Role)
+                .HasConversion<string>();
 
         }
     }

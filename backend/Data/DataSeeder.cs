@@ -1,4 +1,5 @@
 using Askii.backend.Model;
+using Askii.backend.Model.Enums;
 
 namespace Askii.backend.Data
 {
@@ -34,10 +35,23 @@ namespace Askii.backend.Data
                 var session = new Session
                 {
                     SessionID = Guid.NewGuid().ToString(),
-                    SessionAdminUID = user1.UID,
                     SessionTopic = "Intro to C#",
                     CreatedAt = DateTime.UtcNow,
-                    SessionAttendees = new List<User> { user1, user2}
+                    SessionAdmin = user1,
+                    SessionAdminUID = user1.UID,
+                    SessionParticipants = new List<UserSession>
+                    {
+                        new UserSession
+                        {
+                            UID = user1.UID,
+                            Role = UserRole.Admin
+                        },
+                        new UserSession
+                        {
+                            UID = user2.UID,
+                            Role = UserRole.Attendee
+                        }
+                    }
                 };
 
                 context.Sessions.Add(session);

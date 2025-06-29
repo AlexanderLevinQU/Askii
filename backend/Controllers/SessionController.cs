@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Askii.backend.Model;
+using Askii.backend.Model.Enums;
 using Askii.backend.DTOs.Session;
 using Microsoft.EntityFrameworkCore;
 using Askii.backend.Data;
@@ -21,22 +22,25 @@ namespace Askii.backend.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<SessionDTO>> GetSession(string id)
         {
-            Session? session = await _context.Sessions
-                .Include(s => s.SessionAttendees)
-                .Include(s => s.SessionModerators)
+            var session = await _context.Sessions
+                .Include(s => s.SessionParticipants)
+                    .ThenInclude(sp => sp.User)
                 .FirstOrDefaultAsync(s => s.SessionID == id);
 
             if (session == null)
                 return NotFound();
 
-            SessionDTO sessionDTO = new SessionDTO
+            var sessionDTO = new SessionDTO
             {
                 SessionID = session.SessionID,
-                SessionAdminUID = session.SessionAdminUID,
                 SessionTopic = session.SessionTopic,
-                SessionAttendeeUIDs = session.SessionAttendees?.Select(a => a?.UID).ToList(), //maybe get rid of a? because it is required?
-                SessionModeratorUIDs = session.SessionModerators?.Select(a => a?.UID).ToList(),
-                CreatedAt = session.CreatedAt
+                CreatedAt = session.CreatedAt,
+                Users = session.SessionParticipants.Select(sp => new SessionUserDTO
+                {
+                    UID = sp.User.UID,
+                    UserName = sp.User.UserName,
+                    Role = sp.Role
+                }).ToList()
             };
 
             return Ok(sessionDTO);
@@ -46,28 +50,41 @@ namespace Askii.backend.Controllers
         [HttpPost]
         public async Task<ActionResult<SessionDTO>> CreateSession(CreateSessionDTO dto)
         {
-            Session session = new Session
+            var session = new Session
             {
                 SessionID = Guid.NewGuid().ToString(),
-                SessionAdminUID = dto.SessionAdminUID,
                 SessionTopic = dto.SessionTopic,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                SessionParticipants = new List<UserSession>
+                {
+                    new UserSession
+                    {
+                        UID = dto.SessionAdminUID,
+                        Role = UserRole.Admin
+                    }
+                }
             };
 
             _context.Sessions.Add(session);
             await _context.SaveChangesAsync();
 
-            // Return created session
-            SessionDTO result = new SessionDTO
+            // Build DTO result
+            var result = new SessionDTO
             {
                 SessionID = session.SessionID,
-                SessionAdminUID = session.SessionAdminUID,
                 SessionTopic = session.SessionTopic,
-                CreatedAt = session.CreatedAt
+                CreatedAt = session.CreatedAt,
+                Users = session.SessionParticipants.Select(sp => new SessionUserDTO
+                {
+                    UID = sp.UID,
+                    UserName = _context.Users.FirstOrDefault(u => u.UID == sp.UID)?.UserName ?? "",
+                    Role = sp.Role
+                }).ToList()
             };
 
             return CreatedAtAction(nameof(GetSession), new { id = session.SessionID }, result);
         }
+
 
         // DELETE: api/session/{id}
         [HttpDelete("{id}")]
@@ -84,92 +101,58 @@ namespace Askii.backend.Controllers
             return NoContent();
         }
 
-        [HttpPost("{sessionId}/add-attendee/{userId}")]
-        public async Task<IActionResult> AddAttendeeToSession(string sessionId, string userId)
+        [HttpPost("{sessionId}/add-user/{userId}")]
+        public async Task<IActionResult> AddUserToSession(string sessionId, string userId, [FromQuery] UserRole role)
         {
             var session = await _context.Sessions
-                .Include(s => s.SessionAttendees)
+                .Include(s => s.SessionParticipants)
                 .FirstOrDefaultAsync(s => s.SessionID == sessionId);
 
             if (session == null)
                 return NotFound("Session not found");
 
             var user = await _context.Users.FindAsync(userId);
-
             if (user == null)
                 return NotFound("User not found");
 
-            if (session.SessionAttendees.Any(u => u.UID == userId))
-                return BadRequest("User is already an attendee");
+            if (session.SessionParticipants.Any(sp => sp.UID == userId))
+                return BadRequest("User is already a participant in this session");
 
-            session.SessionAttendees.Add(user);
+            session.SessionParticipants.Add(new UserSession
+            {
+                UID = userId,
+                Role = role
+            });
+
             await _context.SaveChangesAsync();
 
-            return Ok("User added as attendee");
+            return Ok($"User added as {role}");
         }
 
-        [HttpPost("{sessionId}/add-moderator/{userId}")]
-        public async Task<IActionResult> AddModeratorToSession(string sessionId, string userId)
+        [HttpDelete("{sessionId}/remove-user/{userId}")]
+        public async Task<IActionResult> RemoveUserFromSession(string sessionId, string userId, [FromQuery] UserRole role)
         {
             var session = await _context.Sessions
-                .Include(s => s.SessionModerators)
+                .Include(s => s.SessionParticipants)
                 .FirstOrDefaultAsync(s => s.SessionID == sessionId);
 
             if (session == null)
                 return NotFound("Session not found");
 
-            var user = await _context.Users.FindAsync(userId);
-            
-            if (user == null)
-                return NotFound("User not found");
+            var participant = session.SessionParticipants
+                .FirstOrDefault(sp => sp.UID == userId && sp.Role == role);
 
-            if (session.SessionModerators.Any(u => u.UID == userId))
-                return BadRequest("User is already an attendee");
+            if (participant == null)
+                return NotFound($"User with role '{role}' is not part of this session.");
 
-            session.SessionModerators.Add(user);
+            if (participant.Role == UserRole.Admin)
+                return Forbid("Removing Admins is not allowed through this endpoint.");
+
+            session.SessionParticipants.Remove(participant);
             await _context.SaveChangesAsync();
 
-            return Ok("User added as attendee");
+            return Ok($"User removed from session as {role}.");
         }
 
-        [HttpDelete("{sessionId}/remove-moderator/{userId}")]
-        public async Task<IActionResult> RemoveModeratorFromSession(string sessionId, string userId)
-        {
-            var session = await _context.Sessions
-                .Include(s => s.SessionModerators)
-                .FirstOrDefaultAsync(s => s.SessionID == sessionId);
-
-            if (session == null)
-                return NotFound("Session not found");
-
-            var user = session.SessionModerators.FirstOrDefault(u => u.UID == userId);
-            if (user == null)
-                return NotFound("User is not an attendee of this session");
-
-            session.SessionModerators.Remove(user);
-            await _context.SaveChangesAsync();
-
-            return Ok("User removed from attendees");
-        }
-
-        [HttpDelete("{sessionId}/remove-attendee/{userId}")]
-        public async Task<IActionResult> RemoveAttendeeFromSession(string sessionId, string userId)
-        {
-            var session = await _context.Sessions
-                .Include(s => s.SessionAttendees)
-                .FirstOrDefaultAsync(s => s.SessionID == sessionId);
-
-            if (session == null)
-                return NotFound("Session not found");
-
-            var user = session.SessionAttendees.FirstOrDefault(u => u.UID == userId);
-            if (user == null)
-                return NotFound("User is not an attendee of this session");
-
-            session.SessionAttendees.Remove(user);
-            await _context.SaveChangesAsync();
-
-            return Ok("User removed from attendees");
-        }
     }
 }

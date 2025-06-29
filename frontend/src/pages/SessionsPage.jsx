@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useUser } from "../contexts/UserContext";
+import SessionCardList from "../components/SessionCardList";
 import axios from "axios";
 
 function Sessions()
@@ -8,55 +9,38 @@ function Sessions()
     const [adminSessions, setAdminSessions] = useState([]);
     const [moderatedSessions, setModeratedSessions] = useState([]);
     const { user } = useUser();
-
-    useEffect(() => {
-
-        console.log(user);
-        if (!user?.user?.uid) return;
-
-        axios.get(`/api/user/${user.user.uid}/attended-sessions`)
-            .then(response => {
-                setUserSessions(response.data);
-            })
-            .catch(error => {
-                console.error("Failed to fetch user sessions:", error);
-            });
-        
-        axios.get(`/api/user/${user.user.uid}/moderated-sessions`)
-            .then(response => {
-                setModeratedSessions(response.data);
-            })
-            .catch(error => {
-                console.error("Failed to fetch user sessions:", error);
-            });
-
-        axios.get(`/api/user/${user.user.uid}/admin-sessions`)
-            .then(response => {
-                setAdminSessions(response.data);
-            })
-            .catch(error => {
-                console.error("Failed to fetch user sessions:", error);
-            });
-
-    }, [user]);
     
-    /*console.log(userSessions);
-    console.log(moderatedSessions);
-    */
-    console.log(adminSessions);
+    useEffect(() => {
+        if (!user?.user?.uid) return;
+        console.log(user);
 
-    const myAdminSessions = adminSessions.map((session) => (
-        <div key={session.sessionID} className="session-card">
-            <h3>{session.sessionTopic}</h3>
-            <p><strong>Admin:</strong> {session.sessionAdminUserName}</p>
-            <p><strong>Attendees:</strong> {session.sessionAttendeeUIDs?.length}</p>
-            <p><strong>Created:</strong> {new Date(session.createdAt).toLocaleString()}</p>
-        </div>
-    )).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        axios.get(`/api/user/${user.user.uid}/user-with-sessions/`) // Unified endpoint returning all sessions with role info
+            .then(response => {
+            const data = response.data;
+            console.log(response.data);
+            // Assuming each session includes role info per user session (e.g., session.Users with Role)
+            // Filter sessions by role
+            setUserSessions(data.sessions.filter(s => s.role === 2));
+            setModeratedSessions(data.sessions.filter(s => s.role === 1));
+            setAdminSessions(data.sessions.filter(s => s.role === 0));
+        })
+            .catch(error => {
+            console.error("Failed to fetch user sessions:", error);
+        });
+    }, [user])
+
+    
+    console.log(userSessions); 
+
 
     return (  
-        <div>
-            <ul>{myAdminSessions}</ul>
+        <div className="admin-sessions">
+        <h2>Your Admin Sessions</h2>
+            <SessionCardList sessions={adminSessions} />
+        <h2>Your Attended Sessions</h2>
+            <SessionCardList sessions={userSessions} />
+        <h2>Your Moderated Sessions</h2>
+            <SessionCardList sessions={moderatedSessions} />
         </div>
     );
 }

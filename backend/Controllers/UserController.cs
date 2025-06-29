@@ -2,6 +2,7 @@ using Askii.backend.Data;
 using Askii.backend.DTOs.Session;
 using Askii.backend.DTOs.User;
 using Askii.backend.Model;
+using Askii.backend.Model.Enums;
 using Askii.backend.Extensions.SessionExtensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -44,27 +45,20 @@ namespace Askii.backend.Controllers
             return Ok(userDTO);
         }
 
-        [HttpGet("{UID}/user-wth-sessions")]
+        [HttpGet("{UID}/user-with-sessions")]
         public async Task<ActionResult<UserDetailsDTO>> GetUserWithSessions(string UID)
         {
             var user = await _context.Users
-                .Include(u => u.AdministeredSessions)
-                .Include(u => u.ModeratedSessions)
-                .Include(u => u.AttendedSessions)
+                .Include(u => u.UserSessions)
+                .ThenInclude(us => us.Session)
+                .ThenInclude(s => s.SessionParticipants)
+                .ThenInclude(sp => sp.User)
                 .FirstOrDefaultAsync(u => u.UID == UID);
 
             if (user == null)
                 return NotFound();
 
-            var userDTO = new UserDetailsDTO
-            {
-                UID = user.UID,
-                UserName = user.UserName,
-                Email = user.Email,
-                AdministeredSessions = user.AdministeredSessions.Select(s => s.ToDTO()).ToList(),
-                ModeratedSessions = user.ModeratedSessions.Select(s => s.ToDTO()).ToList(),
-                AttendedSessions = user.AttendedSessions.Select(s => s.ToDTO()).ToList()
-            };
+            UserDetailsDTO userDTO = user.ToDetailsDTO();
 
             return Ok(userDTO);
         }
@@ -155,104 +149,33 @@ namespace Askii.backend.Controllers
 
         //Sessions for user specific      
 
-        // GET: api/user/{uid}/sessions
-        [HttpGet("{UID}/sessions")]
-        public async Task<ActionResult<List<SessionDTO>>> GetSessionsForUser(string UID)
+        // GET: api/user/{uid}/sessions?role=Moderator
+        [HttpGet("{uid}/sessions")]
+        public async Task<ActionResult<List<SessionDTO>>> GetSessionsForUser(
+            string uid,
+            [FromQuery] UserRole? role = null // optional query param
+        )
         {
-            var sessions = await _context.Sessions
-                .Include(s => s.SessionAdmin)
-                .Include(s => s.SessionAttendees)
-                .Include(s => s.SessionModerators)
-                .Where(s =>
-                    s.SessionAdminUID == UID ||
-                    s.SessionModerators.Any(m => m.UID == UID) ||
-                    s.SessionAttendees.Any(a => a.UID == UID))
-                .ToListAsync();
+            var user = await _context.Users
+                .Include(u => u.UserSessions)
+                    .ThenInclude(us => us.Session)
+                        .ThenInclude(s => s.SessionParticipants)
+                            .ThenInclude(sp => sp.User)
+                .FirstOrDefaultAsync(u => u.UID == uid);
 
-            var sessionDTOs = sessions.Select(session => new SessionDTO
+            if (user == null)
+                return NotFound("User not found");
+
+            var userSessions = user.UserSessions;
+
+            if (role.HasValue)
             {
-                SessionID = session.SessionID,
-                SessionAdminUID = session.SessionAdminUID,
-                SessionTopic = session.SessionTopic,
-                CreatedAt = session.CreatedAt,
-                SessionAttendeeUIDs = session.SessionAttendees?.Select(a => a?.UID).ToList(),
-                SessionModeratorUIDs = session.SessionModerators?.Select(m => m?.UID).ToList()
-            }).ToList();
+                userSessions = userSessions.Where(us => us.Role == role.Value).ToList();
+            }
 
-            return Ok(sessionDTOs);
-        }
-
-        // GET: api/user/{uid}/moderated-sessions
-        [HttpGet("{UID}/moderated-sessions")]
-        public async Task<ActionResult<List<SessionDTO>>> GetModeratedSessionsForUser(string UID)
-        {
-            var sessions = await _context.Sessions
-                .Include(s => s.SessionAdmin)
-                .Include(s => s.SessionAttendees)
-                .Include(s => s.SessionModerators)
-                .Where(s => s.SessionModerators.Any(m => m.UID == UID))
-                .ToListAsync();
-
-            var sessionDTOs = sessions.Select(session => new SessionDTO
-            {
-                SessionID = session.SessionID,
-                SessionAdminUID = session.SessionAdminUID,
-                SessionAdminUserName = session.SessionAdmin.UserName,
-                SessionTopic = session.SessionTopic,
-                CreatedAt = session.CreatedAt,
-                SessionAttendeeUIDs = session.SessionAttendees?.Select(a => a?.UID).ToList(),
-                SessionModeratorUIDs = session.SessionModerators?.Select(m => m?.UID).ToList()
-            }).ToList();
-
-            return Ok(sessionDTOs);
-        }
-
-        // GET: api/user/{uid}/attendee-sessions
-        [HttpGet("{UID}/attended-sessions")]
-        public async Task<ActionResult<List<SessionDTO>>> GetAttendedSessionsForUser(string UID)
-        {
-            var sessions = await _context.Sessions
-                .Include(s => s.SessionAdmin)
-                .Include(s => s.SessionAttendees)
-                .Include(s => s.SessionModerators)
-                .Where(s => s.SessionAttendees.Any(m => m.UID == UID))
-                .ToListAsync();
-
-            var sessionDTOs = sessions.Select(session => new SessionDTO
-            {
-                SessionID = session.SessionID,
-                SessionAdminUID = session.SessionAdminUID,
-                SessionAdminUserName = session.SessionAdmin.UserName,
-                SessionTopic = session.SessionTopic,
-                CreatedAt = session.CreatedAt,
-                SessionAttendeeUIDs = session.SessionAttendees?.Select(a => a?.UID).ToList(),
-                SessionModeratorUIDs = session.SessionModerators?.Select(m => m?.UID).ToList()
-            }).ToList();
-
-            return Ok(sessionDTOs);
-        }
-
-        // GET: api/user/{uid}/admin-sessions
-        [HttpGet("{UID}/admin-sessions")]
-        public async Task<ActionResult<List<SessionDTO>>> GetAdminSessionsForUser(string UID)
-        {
-            var sessions = await _context.Sessions
-                .Include(s => s.SessionAdmin)
-                .Include(s => s.SessionAttendees)
-                .Include(s => s.SessionModerators)
-                .Where(s => s.SessionAdmin.UID == UID)
-                .ToListAsync();
-
-            var sessionDTOs = sessions.Select(session => new SessionDTO
-            {
-                SessionID = session.SessionID,
-                SessionAdminUID = session.SessionAdminUID,
-                SessionAdminUserName = session.SessionAdmin.UserName,
-                SessionTopic = session.SessionTopic,
-                CreatedAt = session.CreatedAt,
-                SessionAttendeeUIDs = session.SessionAttendees?.Select(a => a?.UID).ToList(),
-                SessionModeratorUIDs = session.SessionModerators?.Select(m => m?.UID).ToList()
-            }).ToList();
+            var sessionDTOs = userSessions
+                .Select(us => us.Session.ToDTO())
+                .ToList();
 
             return Ok(sessionDTOs);
         }
@@ -282,8 +205,5 @@ namespace Askii.backend.Controllers
                 }
             });
         }
-
-
-        
     }
 }
