@@ -1,0 +1,33 @@
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: left;
+    flex-direction: column;
+    margin-bottom: 1vh;
+    margin-left: 1vh;
+    border-radius: 8px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
+    border: 1px solid black;
+    overflow: hidden;
+}
+
+.header {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    background-color: #FF7F50;
+    border-radius: 4px;
+    border-bottom: 1px solid black;
+    width: 100%;
+}
+
+.cardInfo {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+}
+
+.container:hover{
+    background-color: #f3f4f6;
+}

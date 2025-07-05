@@ -1,46 +1,36 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useUser } from "../contexts/UserContext";
 import SessionCardList from "../components/SessionCardList";
-import axios from "axios";
+import QuestionPanel from "../components/QuestionPanel";
+import styles from "../styles/SessionPage.module.css"
 
 function Sessions()
 {
-    const [userSessions, setUserSessions] = useState([]);
-    const [adminSessions, setAdminSessions] = useState([]);
-    const [moderatedSessions, setModeratedSessions] = useState([]);
     const { user } = useUser();
-    
-    useEffect(() => {
-        if (!user?.user?.uid) return;
-        console.log(user);
+    const [selectedSession, setSelectedSession] = useState(null);
 
-        axios.get(`/api/user/${user.user.uid}/user-with-sessions/`) // Unified endpoint returning all sessions with role info
-            .then(response => {
-            const data = response.data;
-            console.log(response.data);
-            // Assuming each session includes role info per user session (e.g., session.Users with Role)
-            // Filter sessions by role
-            setUserSessions(data.sessions.filter(s => s.role === 2));
-            setModeratedSessions(data.sessions.filter(s => s.role === 1));
-            setAdminSessions(data.sessions.filter(s => s.role === 0));
-        })
-            .catch(error => {
-            console.error("Failed to fetch user sessions:", error);
-        });
-    }, [user])
+    const handleSessionClick = (session) => {
+        setSelectedSession(session);
+    };
 
-    
-    console.log(userSessions); 
-
+    const closePanel = () => {
+        setSelectedSession(null);
+    };
 
     return (  
-        <div className="admin-sessions">
-        <h2>Your Admin Sessions</h2>
-            <SessionCardList sessions={adminSessions} />
-        <h2>Your Attended Sessions</h2>
-            <SessionCardList sessions={userSessions} />
-        <h2>Your Moderated Sessions</h2>
-            <SessionCardList sessions={moderatedSessions} />
+        <div className={styles.container}>
+            <div className={styles.sessionsListContainer}>
+                <h2 className={styles.header}>Sessions</h2>
+                    <SessionCardList currentUserUID={user?.user?.uid} 
+                        onSessionClick={handleSessionClick}
+                    />
+            </div>
+            {
+                selectedSession && 
+                (
+                    <QuestionPanel session={selectedSession} onClose={closePanel} />
+                )
+            }
         </div>
     );
 }
