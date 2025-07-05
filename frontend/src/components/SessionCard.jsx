@@ -15,7 +15,7 @@ const SessionCard = ({ session, onClick }) => {
         <p><strong>Created:</strong> {createdDate}</p>
       </div>
     </div>
-  );
+  ); 
 };
 
 export default SessionCard;

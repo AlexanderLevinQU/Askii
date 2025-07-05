@@ -23,7 +23,7 @@ const SessionCardList = ({ currentUserUID, onSessionClick }) => {
       })
       .finally(() => setLoading(false));
       
-  }, [selectedTab, currentUserUID]);
+  }, [selectedTab, currentUserUID]); 
 
   return (
     <div>

@@ -5,7 +5,7 @@ const SessionNavbar = ({ selectedTab, onSelectTab }) => {
     { label: 'Attended', value: 'Attendee' },
     { label: 'Admin', value: 'Admin' },
     { label: 'Moderated', value: 'Moderator' },
-  ];
+  ]; 
 
   return (
     <div className={styles.navbar}>

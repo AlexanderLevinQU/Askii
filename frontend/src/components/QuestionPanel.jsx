@@ -1,10 +1,13 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
+import styles from '../styles/QuestionPanel.module.css'
+import QuestionCard from "./QuestionCard";
 
 const QuestionPanel = ({ session, onClose }) => {
     
     const [questions, setQuestions] = useState([]);
     const [loading, setLoading] = useState(true);
+
     useEffect(() => {
 
         if (session == null) return;
@@ -20,14 +23,17 @@ const QuestionPanel = ({ session, onClose }) => {
 
     }, [session]);
 
-    console.log(questions);
-
   return (
-    <div className="question-panel">
-      <button className="close-button" onClick={onClose}>✕</button>
-      <h2>Questions for {session.sessionTopic}</h2>
-      {/* Load questions here or show static for now */}
-      <p>Session ID: {session.sessionID}</p>
+    <div className={styles.container}>
+        <div className={styles.header}> {session.sessionTopic}
+            <button className={styles.closeButton} onClick={onClose}>✕</button>
+        </div>
+        {questions.map((question) => (
+            <QuestionCard 
+                key={question.questionID} 
+                question={question}
+            />
+            ))}
     </div>
   );
 };

@@ -12,7 +12,7 @@ function Sessions()
     const handleSessionClick = (session) => {
         setSelectedSession(session);
     };
-
+ 
     const closePanel = () => {
         setSelectedSession(null);
     };

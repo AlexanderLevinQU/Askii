@@ -58,11 +58,14 @@ namespace Askii.backend.Controllers
             _context.Questions.Add(question);
             await _context.SaveChangesAsync();
 
+            User asker = await _context.Users.FindAsync(question.AskerUID);
+
             // Return created question
             QuestionDTO result = new QuestionDTO
             {
                 QuestionID = question.QuestionID,
                 AskerUID = question.AskerUID,
+                AskerUserName = asker.UserName ?? "Unknown",
                 Content = question.Content,
                 Votes = question.Votes,
                 CreatedAt = question.CreatedAt,
@@ -78,6 +81,7 @@ namespace Askii.backend.Controllers
         public async Task<ActionResult<List<QuestionDTO>>> GetQuestionsForSession(string sessionId) 
         {
             var questions = await _context.Questions
+                .Include(q => q.Asker)
                 .Where(q => q.SessionID == sessionId)
                 .OrderByDescending(q => q.Votes)
                 .ToListAsync();
@@ -86,6 +90,7 @@ namespace Askii.backend.Controllers
             {
                 QuestionID = q.QuestionID,
                 AskerUID = q.AskerUID,
+                AskerUserName = q.Asker.UserName,
                 Content = q.Content,
                 Votes = q.Votes,
                 CreatedAt = q.CreatedAt,
