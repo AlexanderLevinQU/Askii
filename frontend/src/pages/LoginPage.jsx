@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import styles from '../styles/Login.module.css';
 import { useNavigate } from "react-router-dom";
@@ -9,8 +9,18 @@ function Login()
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const { login } = useUser();
+    const { login, user } = useUser();
     const navigate = useNavigate();
+
+    useEffect(() => {
+
+        if (user != null)
+        {
+            console.log("nav to sessions with user:", user);
+            navigate('/sessions');
+        }
+
+    }, [user]);
     
     const handleSubmit = async (e) => 
     {
@@ -25,6 +35,7 @@ function Login()
             });
 
             console.log('Login success:', response.data);
+
         } catch (error)
         {
             console.error('Login error:', error.response?.data || error.message);

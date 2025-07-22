@@ -13,6 +13,7 @@ export const UserProvider = ({ children }) => {
   // ✅ Load from localStorage on mount
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
+    console.log("this is user in UserContext", storedUser);
     if (storedUser) 
     {
       try {

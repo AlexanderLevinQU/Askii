@@ -7,6 +7,7 @@ body{
     flex-direction: row;
     justify-content: flex-start;
     width: 100vw;
+    height: 100vh;
     margin-top: 2vh;
     margin-bottom: 2vh;
 }
@@ -15,7 +16,6 @@ body{
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    min-height: 100vh;
     text-align: center;
     box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
     border-radius: 8px;
@@ -24,6 +24,8 @@ body{
     margin-left: 1vw;
     border: 1px solid black;
     background-color: white;
+    overflow-y: auto;
+    height: 95vh;
 }
 
 
