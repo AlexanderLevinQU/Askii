@@ -34,7 +34,7 @@ namespace Askii.backend.Controllers
                 QuestionID = question.QuestionID,
                 SessionID = question.SessionID,
                 AskerUID = question.AskerUID,
-                Votes = question.Votes,
+                Votes = question.Votes.Count(),
                 Content = question.Content,
                 CreatedAt = question.CreatedAt,
             };
@@ -50,7 +50,7 @@ namespace Askii.backend.Controllers
                 QuestionID = Guid.NewGuid().ToString(),
                 SessionID = questionDTO.SessionID,
                 AskerUID = questionDTO.AskerUID,
-                Votes = 0,
+                Votes = new List<QuestionVote>(),
                 Content = questionDTO.Content,
                 CreatedAt = DateTime.UtcNow
             };
@@ -67,7 +67,7 @@ namespace Askii.backend.Controllers
                 AskerUID = question.AskerUID,
                 AskerUserName = asker.UserName ?? "Unknown",
                 Content = question.Content,
-                Votes = question.Votes,
+                Votes = 0,
                 CreatedAt = question.CreatedAt,
                 SessionID = question.SessionID
             };
@@ -83,7 +83,7 @@ namespace Askii.backend.Controllers
             var questions = await _context.Questions
                 .Include(q => q.Asker)
                 .Where(q => q.SessionID == sessionId)
-                .OrderByDescending(q => q.Votes)
+                .OrderByDescending(q => q.Votes.Count())
                 .ToListAsync();
 
             var questionDTOs = questions.Select(q => new QuestionDTO
@@ -92,7 +92,7 @@ namespace Askii.backend.Controllers
                 AskerUID = q.AskerUID,
                 AskerUserName = q.Asker.UserName,
                 Content = q.Content,
-                Votes = q.Votes,
+                Votes = q.Votes.Count(),
                 CreatedAt = q.CreatedAt,
                 SessionID = q.SessionID
             }).ToList();

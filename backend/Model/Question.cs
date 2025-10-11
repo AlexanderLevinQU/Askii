@@ -8,7 +8,7 @@ namespace Askii.backend.Model
         {
             //basic constructor
             CreatedAt = DateTime.UtcNow;
-            Votes = 0;
+            Votes = new List<QuestionVote>();
             Content = string.Empty;
         }
 
@@ -29,11 +29,13 @@ namespace Askii.backend.Model
         [Required]
         public User Asker { get; set; }
 
-        public int Votes { get; set; }
+        public ICollection<QuestionVote> Votes { get; set; } = new List<QuestionVote>();
 
         // Better naming for the text of the question
         public string Content { get; set; }
 
         public DateTime CreatedAt { get; set; }
+
+        public Answer Answer { get; set; } //Answer to question
     }
 }

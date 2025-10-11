@@ -11,6 +11,8 @@ namespace Askii.backend.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Session> Sessions { get; set; }
         public DbSet<Question> Questions { get; set; }
+        public DbSet<Answer> Answers { get; set; }
+        public DbSet<QuestionVote> QuestionVotes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -56,6 +58,39 @@ namespace Askii.backend.Data
                 .Property(us => us.Role)
                 .HasConversion<string>();
 
+            /*** Answer ***/
+
+            // One-to-one: Question → Answer
+            modelBuilder.Entity<Question>()
+                .HasOne(q => q.Answer)
+                .WithOne(a => a.Question)
+                .HasForeignKey<Answer>(a => a.QuestionID)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Answer has one User (responder)
+            modelBuilder.Entity<Answer>()
+                .HasOne(a => a.Responder)
+                .WithMany()
+                .HasForeignKey(a => a.ResponderUID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+
+            /*** Votes ***/
+            modelBuilder.Entity<QuestionVote>()
+                .HasIndex(v => new { v.UserID, v.QuestionID })
+                .IsUnique(); // Only one upvote per user per question
+
+            modelBuilder.Entity<QuestionVote>()
+                .HasOne(v => v.Question)
+                .WithMany(q => q.Votes)
+                .HasForeignKey(v => v.QuestionID)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<QuestionVote>()
+                .HasOne(v => v.User)
+                .WithMany()
+                .HasForeignKey(v => v.UserID)
+                .OnDelete(DeleteBehavior.Restrict); ;
         }
     }
 }

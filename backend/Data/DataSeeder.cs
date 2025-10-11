@@ -64,7 +64,7 @@ namespace Askii.backend.Data
                     AskerUID = user2.UID,
                     SessionID = session.SessionID,
                     CreatedAt = DateTime.UtcNow,
-                    Votes = 3
+                    Votes = new List<QuestionVote>()
                 };
 
                 context.Questions.Add(question);
