@@ -3,6 +3,7 @@ using Askii.backend.Model;
 using Microsoft.EntityFrameworkCore;
 using Askii.backend.Data;
 using Askii.backend.DTOs.Question;
+using Askii.backend.Model.Enums;
 
 namespace Askii.backend.Controllers
 {
@@ -22,8 +23,9 @@ namespace Askii.backend.Controllers
         public async Task<ActionResult<QuestionDTO>> GetQuestion(string id)
         {
             Question? question = await _context.Questions
-                .Include(q => q.SessionID)
-                .Include(q => q.AskerUID)
+                .Include(q => q.Session)
+                .Include(q => q.Asker)
+                .Include(q=>q.Votes)
                 .FirstOrDefaultAsync(q => q.QuestionID == id);
 
             if (question == null)
@@ -34,7 +36,8 @@ namespace Askii.backend.Controllers
                 QuestionID = question.QuestionID,
                 SessionID = question.SessionID,
                 AskerUID = question.AskerUID,
-                Votes = question.Votes.Count(),
+                Votes = question.Votes
+                    .Where(vote => vote.VoteType == VoteType.UpVote).Count(),
                 Content = question.Content,
                 CreatedAt = question.CreatedAt,
             };
@@ -73,6 +76,34 @@ namespace Askii.backend.Controllers
             };
 
             return CreatedAtAction(nameof(GetQuestion), new { id = question.QuestionID }, result);
+        }
+
+        //Move to a question vote controller
+        [HttpPost("{questionId}/vote")]
+        public async Task<ActionResult<QuestionVoteDTO>> CreateQuestionVote(
+            string questionId,
+            CreateQuestionVoteDTO dto)
+        {
+            var qVote = new QuestionVote
+            {
+                VoteID = Guid.NewGuid().ToString(),
+                QuestionID = questionId,               // from route
+                UserID = dto.UserID,                   // TEMPORARY
+                VoteType = dto.VoteType,
+                Timestamp = DateTime.UtcNow            // server-owned
+            };
+
+            _context.QuestionVotes.Add(qVote);
+            await _context.SaveChangesAsync();
+
+            return Ok(new QuestionVoteDTO
+            {
+                VoteID = qVote.VoteID,
+                QuestionID = qVote.QuestionID,
+                UserID = qVote.UserID,
+                VoteType = qVote.VoteType,
+                Timestamp = qVote.Timestamp
+            });
         }
 
         // TODO: Maybe move to sessions

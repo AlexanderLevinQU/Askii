@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Askii.backend.Model;
+using Askii.backend.Model.Enums;
 
 public class QuestionVote
 {
@@ -14,6 +15,9 @@ public class QuestionVote
     [Required]
     public string? UserID { get; set; }
     public User? User { get; set; }
+
+    [Required]
+    public VoteType VoteType { get; set; }
 
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 }
