@@ -31,13 +31,14 @@ namespace Askii.backend.Controllers
             if (question == null)
                 return NotFound();
 
+            int votes = question.Votes.Count(x => x.VoteType == VoteType.UpVote) - question.Votes.Count(x => x.VoteType == VoteType.DownVote);
+
             QuestionDTO questionDTO = new QuestionDTO()
             {
                 QuestionID = question.QuestionID,
                 SessionID = question.SessionID,
                 AskerUID = question.AskerUID,
-                Votes = question.Votes
-                    .Where(vote => vote.VoteType == VoteType.UpVote).Count(),
+                Votes = votes,
                 Content = question.Content,
                 CreatedAt = question.CreatedAt,
             };
@@ -78,55 +79,53 @@ namespace Askii.backend.Controllers
             return CreatedAtAction(nameof(GetQuestion), new { id = question.QuestionID }, result);
         }
 
-        //Move to a question vote controller
-        [HttpPost("{questionId}/vote")]
-        public async Task<ActionResult<QuestionVoteDTO>> CreateQuestionVote(
-            string questionId,
-            CreateQuestionVoteDTO dto)
-        {
-            var qVote = new QuestionVote
-            {
-                VoteID = Guid.NewGuid().ToString(),
-                QuestionID = questionId,               // from route
-                UserID = dto.UserID,                   // TEMPORARY
-                VoteType = dto.VoteType,
-                Timestamp = DateTime.UtcNow            // server-owned
-            };
-
-            _context.QuestionVotes.Add(qVote);
-            await _context.SaveChangesAsync();
-
-            return Ok(new QuestionVoteDTO
-            {
-                VoteID = qVote.VoteID,
-                QuestionID = qVote.QuestionID,
-                UserID = qVote.UserID,
-                VoteType = qVote.VoteType,
-                Timestamp = qVote.Timestamp
-            });
-        }
-
         // TODO: Maybe move to sessions
         // GET: api/question/session/{sessionId}
         [HttpGet("session/{sessionId}")]
-        public async Task<ActionResult<List<QuestionDTO>>> GetQuestionsForSession(string sessionId) 
+        public async Task<ActionResult<List<QuestionDTO>>> GetQuestionsForSession(string sessionId, string userId) 
         {
             var questions = await _context.Questions
                 .Include(q => q.Asker)
+                .Include(q => q.Votes)
                 .Where(q => q.SessionID == sessionId)
-                .OrderByDescending(q => q.Votes.Count())
                 .ToListAsync();
 
-            var questionDTOs = questions.Select(q => new QuestionDTO
-            {
-                QuestionID = q.QuestionID,
-                AskerUID = q.AskerUID,
-                AskerUserName = q.Asker.UserName,
-                Content = q.Content,
-                Votes = q.Votes.Count(),
-                CreatedAt = q.CreatedAt,
-                SessionID = q.SessionID
-            }).ToList();
+            var questionDTOs = questions
+                .Select(q =>
+                {
+                    var upvotes = q.Votes.Count(v => v.VoteType == VoteType.UpVote);
+                    var downvotes = q.Votes.Count(v => v.VoteType == VoteType.DownVote);
+                    var noVotes = q.Votes.Count(v => v.VoteType == VoteType.NoVote);
+                    var score = upvotes - downvotes;
+                    var questionVote = q.Votes.FirstOrDefault(v => v.UserID == userId && q.QuestionID == v.QuestionID);
+
+                    QuestionVoteDTO? userVote = null;
+                    if (questionVote != null)
+                    {
+                        userVote = new QuestionVoteDTO
+                        {
+                            VoteID = questionVote.VoteID,
+                            QuestionID = questionVote.QuestionID,
+                            UserID = questionVote.UserID,
+                            VoteType = questionVote.VoteType,
+                            Timestamp = questionVote.Timestamp
+                        };
+                    }
+
+                   return new QuestionDTO
+                    {
+                        QuestionID = q.QuestionID,
+                        AskerUID = q.AskerUID,
+                        AskerUserName = q.Asker.UserName,
+                        Content = q.Content,
+                        Votes = score,
+                        UserVote = userVote,
+                        CreatedAt = q.CreatedAt,
+                        SessionID = q.SessionID
+                    };
+                })
+                .OrderByDescending(q => q.Votes) // sort AFTER computing score
+                .ToList();
 
             return Ok(questionDTOs);
         }

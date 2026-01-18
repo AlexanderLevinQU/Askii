@@ -28,7 +28,7 @@ function Sessions()
             {
                 selectedSession && 
                 (
-                    <QuestionPanel session={selectedSession} onClose={closePanel} />
+                    <QuestionPanel currentUserUID={user?.user?.uid} session={selectedSession} onClose={closePanel} />
                 )
             }
         </div>
