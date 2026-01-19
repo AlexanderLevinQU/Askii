@@ -22,7 +22,7 @@ const SessionCardList = ({ currentUserUID, onSessionClick }) => {
         setSessions([]);
       })
       .finally(() => setLoading(false));
-      
+    console.log(selectedTab);
   }, [selectedTab, currentUserUID]); 
 
   return (
@@ -36,7 +36,7 @@ const SessionCardList = ({ currentUserUID, onSessionClick }) => {
         sessions.map((session) => (
             <SessionCard 
                 key={session.sessionID} 
-                session={session} 
+                session={session}
                 onClick={() => onSessionClick(session)}
             />
             ))

@@ -1,9 +1,10 @@
 ﻿import styles from '../styles/QuestionCard.module.css'
 import axios from "axios";
+import { VoteType } from "../model/votes/enums/VoteType"
 
 
 const QuestionCard = ({ question, currentUserUID, onVote }) => {
-  const askerUserName = question.askerUserName|| "Unknown";
+  const askerUserName = question.askerUserName || "Unknown";
   const questionContent = question.content;
   const questionVotes = question.votes;
   const createdDate = question.createdAt;
@@ -41,10 +42,10 @@ const QuestionCard = ({ question, currentUserUID, onVote }) => {
         <button onClick={() => handleVote(0)} className={styles.voteBtn}>👍</button>
         <button onClick={() => handleVote(1)} className={styles.voteBtn}>👎</button>
         <p>
-            <strong>You voted:</strong>{" "}
-            {userVote.voteType === 0 && "👍"}
-            {userVote.voteType === 1 && "👎"}
-            {(userVote.voteType === 2 || userVote === null) && "You haven't voted"}
+          <strong>You voted:</strong>{" "}
+          {userVote.voteType === VoteType.UpVote && "👍"}
+          {userVote.voteType === VoteType.DownVote && "👎"}
+          {(userVote.voteType === VoteType.NoVote || userVote === null) && "You haven't voted"}
         </p>
         <p><strong>Created:</strong> {createdDate}</p>
       </div>

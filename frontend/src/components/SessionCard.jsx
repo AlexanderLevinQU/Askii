@@ -1,9 +1,10 @@
 // SessionCard.jsx
 import styles from '../styles/SessionCard.module.css'
+import { UserRole } from '../model/user/userRoles/enums/UserRole';
 
 const SessionCard = ({ session, onClick }) => {
-  const admin = session.users.find(u => u.role === 0)?.userName || "Unknown";
-  const attendeeCount = session.users.filter(u => u.role === 2).length;
+  const admin = session.users.find(u => u.role === UserRole.ADMIN)?.userName || "Unknown";
+  const attendeeCount = session.users.filter(u => u.role === UserRole.Attendee).length;
   const createdDate = new Date(session.createdAt).toLocaleString();
 
   return (
