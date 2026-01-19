@@ -21,7 +21,9 @@ const QuestionCard = ({ question, currentUserUID, onVote }) => {
           }
         );
       } else { // update vote
-        //if it already has that vote make it a no vote? Can add next time
+        if (voteType === userVote.voteType) {
+          voteType = VoteType.NoVote;
+        }
         await axios.put(`/api/questionvote/${question.userVote.voteID}`, {
           voteType: voteType
         });
@@ -39,13 +41,13 @@ const QuestionCard = ({ question, currentUserUID, onVote }) => {
       <div className={styles.cardInfo}>
         <p><strong>Asker:</strong> {askerUserName}</p>
         <p><strong>Votes:</strong> {questionVotes}</p>
-        <button onClick={() => handleVote(0)} className={styles.voteBtn}>👍</button>
-        <button onClick={() => handleVote(1)} className={styles.voteBtn}>👎</button>
+        <button onClick={() => handleVote(VoteType.UpVote)} className={styles.voteBtn}>👍</button>
+        <button onClick={() => handleVote(VoteType.DownVote)} className={styles.voteBtn}>👎</button>
         <p>
           <strong>You voted:</strong>{" "}
-          {userVote.voteType === VoteType.UpVote && "👍"}
-          {userVote.voteType === VoteType.DownVote && "👎"}
-          {(userVote.voteType === VoteType.NoVote || userVote === null) && "You haven't voted"}
+          {userVote?.voteType == VoteType.UpVote && "👍"}
+          {userVote?.voteType == VoteType.DownVote && "👎"}
+          {(userVote === null || userVote.voteType === VoteType.NoVote) && "You haven't voted"}
         </p>
         <p><strong>Created:</strong> {createdDate}</p>
       </div>

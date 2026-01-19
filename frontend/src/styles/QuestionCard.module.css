@@ -35,6 +35,11 @@
     margin: .5vh
 }
 
+.voteBtn:focus {
+    outline: none; /* ensure no outline on click/focus */
+    box-shadow: none; /* remove focus shadow if any */
+}
+
 .container:hover{
     background-color: #f3f4f6;
 }

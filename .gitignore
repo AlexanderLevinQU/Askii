@@ -3,7 +3,11 @@ backend/bin/
 backend/obj/
 backend/*.user
 backend/*.suo
-backend/Migrations/
+
+#ignore db files
+backend/askiidb.sqlite
+backend/askiidb.sqlite-shm
+backend/askiidb.sqlite-wal
 
 # Frontend (React/Vite)
 frontend/node_modules/
@@ -21,3 +25,4 @@ Thumbs.db
 #SSH
 SSHKey
 SSHKey.pub
+

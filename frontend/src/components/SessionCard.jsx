@@ -1,4 +1,3 @@
-// SessionCard.jsx
 import styles from '../styles/SessionCard.module.css'
 import { UserRole } from '../model/user/userRoles/enums/UserRole';
 

@@ -22,7 +22,6 @@ const SessionCardList = ({ currentUserUID, onSessionClick }) => {
         setSessions([]);
       })
       .finally(() => setLoading(false));
-    console.log(selectedTab);
   }, [selectedTab, currentUserUID]); 
 
   return (
